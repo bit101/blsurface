@@ -87,17 +87,28 @@ func (g *Grid) DrawCells(context *cairo.Context) {
 }
 
 func (g *Grid) drawCell(context *cairo.Context, index int) {
-	context.MoveTo(g.Grid[index].X, g.Grid[index].Y)
-	context.LineTo(g.Grid[index+g.W].X, g.Grid[index+g.W].Y)
-	context.LineTo(g.Grid[index+g.W+1].X, g.Grid[index+g.W+1].Y)
-	context.LineTo(g.Grid[index+1].X, g.Grid[index+1].Y)
+	p0 := g.Grid[index]
+	p1 := g.Grid[index+g.W]
+	p2 := g.Grid[index+g.W+1]
+	p3 := g.Grid[index+1]
+
+	context.MoveTo(project(p0))
+	context.LineTo(project(p1))
+	context.LineTo(project(p2))
+	context.LineTo(project(p3))
 	context.ClosePath()
+
 	context.SetSourceWhite()
 	context.FillPreserve()
+
 	context.SetSourceBlack()
 	context.Stroke()
 }
 
-//////////////////////////////
-// TEMP FUNC
-//////////////////////////////
+func project(p *GridPoint) (float64, float64) {
+	// fl := 500.0
+	// scale := fl / (fl - p.Z + 300)
+	scale := 1.0
+	// fmt.Println(scale)
+	return p.X * scale, p.Y * scale
+}

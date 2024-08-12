@@ -20,7 +20,7 @@ const (
 )
 
 func main() {
-	renderTarget := target.Video
+	renderTarget := target.Image
 	fileName := "blsurface"
 
 	if renderTarget == target.Image {
@@ -39,8 +39,9 @@ func scene1(context *cairo.Context, width, height, percent float64) {
 	context.Save()
 	context.TranslateCenter()
 
-	grid := blsurface.NewGrid(100, 100, 10, globe)
-	grid.Rotate(-percent * tau)
+	grid := blsurface.NewGrid(20, 20, 20, concentricWave)
+	grid.Rotate(0.2 * pi)
+	// grid.Rotate(-percent * tau)
 	grid.Tilt(pi * 0.2)
 	// grid.Tilt(blmath.LoopSin(percent, -pi*0.15, pi*0.35))
 	// grid.DrawPoints(context)
@@ -82,16 +83,7 @@ func globe(x, z float64) float64 {
 	size := 181.0
 	r := math.Hypot(x, z)
 	if r < size {
-		s := -math.Sqrt(size*size - r*r)
-		size *= 0.75
-		if r < size {
-			s += math.Sqrt(size*size - r*r)
-		}
-		size *= 0.25
-		if r < size {
-			return -180
-		}
-		return s
+		return -math.Sqrt(size*size - r*r)
 	}
 	return 0
 }
