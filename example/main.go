@@ -39,7 +39,7 @@ func scene1(context *cairo.Context, width, height, percent float64) {
 	context.Save()
 	context.TranslateCenter()
 
-	grid := blsurface.NewGrid(20, 20, 20, concentricWave)
+	grid := blsurface.NewGrid(100, 100, 5, concentricWave)
 	grid.Rotate(0.2 * pi)
 	// grid.Rotate(-percent * tau)
 	grid.Tilt(pi * 0.2)
