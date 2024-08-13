@@ -13,13 +13,15 @@ type YFunction func(x, z float64) float64
 
 // Grid represents a grid of grid points.
 type Grid struct {
-	Grid      []*GridPoint
-	W, D      int
+	cells     []*GridPoint
+	w, d      int
 	yrotation float64
+	tilt      float64
+	yFunc     YFunction
 }
 
 // NewGrid creates a new grid.
-func NewGrid(w, d int, spacing float64, yfunc YFunction) *Grid {
+func NewGrid(w, d int, spacing float64) *Grid {
 	wf := float64(w)
 	df := float64(d)
 	halfW := wf * spacing / 2
@@ -29,30 +31,30 @@ func NewGrid(w, d int, spacing float64, yfunc YFunction) *Grid {
 		zf := blmath.Map(float64(z), 0, df, -halfD, halfD)
 		for x := range w {
 			xf := blmath.Map(float64(x), 0, wf, -halfW, halfW)
-			yf := yfunc(xf, zf)
+			yf := 0.0
 			p := GridPoint{xf, yf, zf}
 			grid = append(grid, &p)
 		}
 	}
-	return &Grid{grid, w, d, 0}
+	return &Grid{grid, w, d, 0, 0, func(x, z float64) float64 { return 0.0 }}
 }
 
-// Tilt rotates all the points on the x axis.
-func (g *Grid) Tilt(t float64) {
-	for _, p := range g.Grid {
-		p.RotateX(t)
-	}
+// SetYFunc sets the function that computes the y value for a given x and z.
+func (g *Grid) SetYFunc(yFunc YFunction) {
+	g.yFunc = yFunc
 }
 
-// Rotate rotates all the points on the y axis.
-func (g *Grid) Rotate(t float64) {
+// SetTilt rotates all the points on the x axis.
+func (g *Grid) SetTilt(t float64) {
+	g.tilt = t
+}
+
+// SetRotation rotates all the points on the y axis.
+func (g *Grid) SetRotation(t float64) {
 	for t < 0 {
 		t += blmath.Tau
 	}
 	g.yrotation = t
-	for _, p := range g.Grid {
-		p.RotateY(t)
-	}
 }
 
 // // RotateZ rotates all the points on the z axis.
@@ -64,33 +66,50 @@ func (g *Grid) Rotate(t float64) {
 
 // DrawPoints draws each point in the grid.
 func (g *Grid) DrawPoints(context *cairo.Context, radius float64) {
-	for _, p := range g.Grid {
+	for _, p := range g.cells {
 		context.FillCircle(p.X, p.Y, radius)
 	}
 }
 
 // DrawCells draws the whole grid.
 func (g *Grid) DrawCells(context *cairo.Context) {
-	for i := 0; i < g.W-1; i++ {
+	g.applyFunc()
+	for i := 0; i < g.w-1; i++ {
 		xIndex := i
 		if g.yrotation > 0 && g.yrotation <= math.Pi {
-			xIndex = g.W - 2 - i
+			xIndex = g.w - 2 - i
 		}
-		for j := 0; j < g.D-1; j++ {
-			zIndex := g.W * j
+		for j := 0; j < g.d-1; j++ {
+			zIndex := g.w * j
 			if g.yrotation > math.Pi*0.5 && g.yrotation <= math.Pi*1.5 {
-				zIndex = (g.D - 2 - j) * g.W
+				zIndex = (g.d - 2 - j) * g.w
 			}
 			g.drawCell(context, xIndex+zIndex)
 		}
 	}
 }
 
+func (g *Grid) applyFunc() {
+	for _, p := range g.cells {
+		p.Y = g.yFunc(p.X, p.Z)
+	}
+	g.transform()
+}
+
+func (g *Grid) transform() {
+	for _, p := range g.cells {
+		p.RotateY(g.yrotation)
+	}
+	for _, p := range g.cells {
+		p.RotateX(g.tilt)
+	}
+}
+
 func (g *Grid) drawCell(context *cairo.Context, index int) {
-	p0 := g.Grid[index]
-	p1 := g.Grid[index+g.W]
-	p2 := g.Grid[index+g.W+1]
-	p3 := g.Grid[index+1]
+	p0 := g.cells[index]
+	p1 := g.cells[index+g.w]
+	p2 := g.cells[index+g.w+1]
+	p3 := g.cells[index+1]
 
 	context.MoveTo(project(p0))
 	context.LineTo(project(p1))
@@ -101,6 +120,11 @@ func (g *Grid) drawCell(context *cairo.Context, index int) {
 	context.SetSourceWhite()
 	context.FillPreserve()
 
+	context.Save()
+	context.SetLineWidth(1)
+	context.SetSourceWhite()
+	context.StrokePreserve()
+	context.Restore()
 	context.SetSourceBlack()
 	context.Stroke()
 }
