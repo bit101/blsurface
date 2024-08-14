@@ -35,18 +35,16 @@ func main() {
 func scene1(context *cairo.Context, width, height, percent float64) {
 	random.Seed(0)
 	context.BlackOnWhite()
-	context.ClearRGB(1, 0.0, 0.0)
-	context.SetLineWidth(0.25)
+	context.SetLineWidth(0.33)
 	context.Save()
 	context.TranslateCenter()
 
-	grid := blsurface.NewGrid(100, 100, 4)
-	// grid.SetRotation(-percent * tau)
-	grid.SetYFunc(concentricWave)
-	grid.SetTilt(pi * 0.2)
-	grid.SetRotation(0.2 * pi)
-	// grid.Tilt(blmath.LoopSin(percent, -pi*0.15, pi*0.35))
-	// grid.DrawPoints(context)
+	grid := blsurface.NewGrid(100, 100, 10)
+	grid.SetYFunc(globe)
+
+	grid.SetTiltDegrees(30)
+	grid.SetRotationDegrees(30)
+
 	grid.DrawCells(context)
 	context.Restore()
 }

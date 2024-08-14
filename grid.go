@@ -49,6 +49,11 @@ func (g *Grid) SetTilt(t float64) {
 	g.tilt = t
 }
 
+// SetTiltDegrees rotates all the points on the x axis.
+func (g *Grid) SetTiltDegrees(t float64) {
+	g.SetTilt(t / 180.0 * math.Pi)
+}
+
 // SetRotation rotates all the points on the y axis.
 func (g *Grid) SetRotation(t float64) {
 	for t < 0 {
@@ -57,12 +62,10 @@ func (g *Grid) SetRotation(t float64) {
 	g.yrotation = t
 }
 
-// // RotateZ rotates all the points on the z axis.
-// func (g *Grid) RotateZ(t float64) {
-// 	for _, p := range g.Grid {
-// 		p.RotateZ(t)
-// 	}
-// }
+// SetRotationDegrees rotates all the points on the y axis.
+func (g *Grid) SetRotationDegrees(t float64) {
+	g.SetRotation(t / 180.0 * math.Pi)
+}
 
 // DrawPoints draws each point in the grid.
 func (g *Grid) DrawPoints(context *cairo.Context, radius float64) {
