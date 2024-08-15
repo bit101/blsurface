@@ -20,11 +20,11 @@ const (
 )
 
 func main() {
-	renderTarget := target.Video
+	renderTarget := target.Image
 	fileName := "blsurface_smooth"
 
 	if renderTarget == target.Image {
-		render.CreateAndViewImage(700, 500, "out/"+fileName+".png", scene1, 0.0)
+		render.CreateAndViewImage(600, 600, "out/"+fileName+".png", scene1, 0.0)
 	} else if renderTarget == target.Video {
 		program := render.NewProgram(600, 600, 30)
 		program.AddSceneWithFrames(scene1, 360)
@@ -42,24 +42,29 @@ func scene1(context *cairo.Context, width, height, percent float64) {
 	//////////////////////////////
 	// make surface
 	//////////////////////////////
-	grid := blsurface.NewGrid(-1, -1, 1, 1, 60)
-	grid.SetYFunc(stepped)
-	grid.SetWidth(500)
+	grid := blsurface.NewGrid()
+	grid.SetGridSize(100)
+	grid.SetWidth(600)
+	grid.SetXRange(-2, 2)
+	grid.SetZRange(-2, 2)
+	grid.SetYFunc(concentricWave)
+	grid.SetYScale(0.125)
+	// grid.SetWidth(500)
 	// grid.SetWidth(blmath.LoopSin(percent, 100, 600))
 
 	// grid.SetTiltDegrees(360 * percent)
 	// grid.SetTiltDegrees(210)
-	grid.SetRotationDegrees(15)
+	// grid.SetRotationDegrees(15)
 
 	// grid.SetTiltDegrees(blmath.LoopSin(percent, -90, 90))
-	grid.SetRotation(tau * percent)
+	// grid.SetRotation(tau * percent)
 
 	grid.DrawCells(context)
 	context.Restore()
 }
 
 func concentricWave(x, z float64) float64 {
-	return math.Sin(math.Hypot(x, z)*tau*2) * 0.25
+	return math.Sin(math.Hypot(x, z) * tau * 2)
 }
 
 func waves(x, z float64) float64 {

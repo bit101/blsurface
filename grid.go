@@ -20,26 +20,53 @@ type Grid struct {
 	tilt                   float64
 	yFunc                  YFunction
 	xMin, zMin, xMax, zMax float64
+	yScale                 float64
 	width                  float64
 }
 
 // NewGrid creates a new grid.
-func NewGrid(xMin, zMin, xMax, zMax, gridSize float64) *Grid {
-	xRange := xMax - xMin
-	zRange := zMax - zMin
+func NewGrid() *Grid {
 
 	return &Grid{
-		w:        int(gridSize),
-		d:        int(gridSize * zRange / xRange),
+		w:        20,
+		d:        20,
 		rotation: math.Pi / 6,
 		tilt:     math.Pi / 6,
 		yFunc:    func(x, z float64) float64 { return 0.0 },
-		xMin:     xMin,
-		zMin:     zMin,
-		xMax:     xMax,
-		zMax:     zMax,
-		width:    300,
+		yScale:   1.0,
+		xMin:     -1,
+		zMin:     -1,
+		xMax:     1,
+		zMax:     1,
+		width:    400,
 	}
+}
+
+func (g *Grid) SetXRange(xMin, xMax float64) {
+	g.xMin = xMin
+	g.xMax = xMax
+	xRange := g.xMax - g.xMin
+	zRange := g.zMax - g.zMin
+	g.d = int(float64(g.w) * zRange / xRange)
+}
+
+func (g *Grid) SetZRange(zMin, zMax float64) {
+	g.zMin = zMin
+	g.zMax = zMax
+	xRange := g.xMax - g.xMin
+	zRange := g.zMax - g.zMin
+	g.d = int(float64(g.w) * zRange / xRange)
+}
+
+func (g *Grid) SetYScale(yScale float64) {
+	g.yScale = yScale
+}
+
+func (g *Grid) SetGridSize(gridSize int) {
+	xRange := g.xMax - g.xMin
+	zRange := g.zMax - g.zMin
+	g.w = gridSize
+	g.d = int(float64(g.w) * zRange / xRange)
 }
 
 // SetYFunc sets the function that computes the y value for a given x and z.
@@ -132,7 +159,7 @@ func (g *Grid) getCell(x, z int) *GridPoint {
 
 func (g *Grid) applyFunc() {
 	for _, p := range g.cells {
-		p.Y = g.yFunc(p.X, p.Z)
+		p.Y = g.yFunc(p.X, p.Z) * g.yScale
 	}
 	g.transform()
 }
