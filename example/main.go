@@ -91,7 +91,7 @@ func stepped(x, z float64) float64 {
 	s := 1.0
 	n := noise.Simplex2(x*s, z*s) * 0.5
 	// n = blmath.RoundToNearest(n, 0.125)
-	r := globe(x, z)
+	r := blmath.RoundToNearest(globe(x, z), 0.125)
 
 	return math.Min(n, r)
 }
