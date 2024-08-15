@@ -20,14 +20,14 @@ const (
 )
 
 func main() {
-	renderTarget := target.Image
-	fileName := "blsurface"
+	renderTarget := target.Video
+	fileName := "blsurface_smooth"
 
 	if renderTarget == target.Image {
 		render.CreateAndViewImage(700, 500, "out/"+fileName+".png", scene1, 0.0)
 	} else if renderTarget == target.Video {
-		program := render.NewProgram(560, 460, 30)
-		program.AddSceneWithFrames(scene1, 90)
+		program := render.NewProgram(600, 600, 30)
+		program.AddSceneWithFrames(scene1, 360)
 		program.RenderAndPlayVideo("out/frames", "out/"+fileName+".mp4")
 	}
 }
@@ -39,22 +39,31 @@ func scene1(context *cairo.Context, width, height, percent float64) {
 	context.Save()
 	context.TranslateCenter()
 
-	grid := blsurface.NewGrid(100, 100, 10)
-	grid.SetYFunc(globe)
+	//////////////////////////////
+	// make surface
+	//////////////////////////////
+	grid := blsurface.NewGrid(-1, -1, 1, 1, 60)
+	grid.SetYFunc(stepped)
+	grid.SetWidth(500)
+	// grid.SetWidth(blmath.LoopSin(percent, 100, 600))
 
-	grid.SetTiltDegrees(30)
-	grid.SetRotationDegrees(30)
+	// grid.SetTiltDegrees(360 * percent)
+	// grid.SetTiltDegrees(210)
+	grid.SetRotationDegrees(15)
+
+	// grid.SetTiltDegrees(blmath.LoopSin(percent, -90, 90))
+	grid.SetRotation(tau * percent)
 
 	grid.DrawCells(context)
 	context.Restore()
 }
 
 func concentricWave(x, z float64) float64 {
-	return math.Sin(math.Hypot(x, z)*0.05) * 40
+	return math.Sin(math.Hypot(x, z)*tau*2) * 0.25
 }
 
 func waves(x, z float64) float64 {
-	return math.Sin(x*0.07)*10 + math.Cos(z*0.05)*20
+	return math.Sin(x*pi)*0.25 + math.Cos(z*pi*2)*0.2
 }
 
 func flat(x, z float64) float64 {
@@ -62,7 +71,7 @@ func flat(x, z float64) float64 {
 }
 
 func rando(x, z float64) float64 {
-	return random.FloatRange(-20, 20)
+	return random.FloatRange(-0.07, 0.07)
 }
 
 func noisy(percent float64) blsurface.YFunction {
@@ -72,18 +81,26 @@ func noisy(percent float64) blsurface.YFunction {
 	}
 }
 
-func stepped(x, z float64) float64 {
-	s := 0.005
-	n := noise.Simplex2(x*s, z*s)*40 + 40
-	n = blmath.RoundToNearest(n, 70)
+func staticNoise(x, z float64) float64 {
+	s := 1.0
+	n := noise.Simplex2(x*s, z*s) * 0.2
 	return n
 }
 
+func stepped(x, z float64) float64 {
+	s := 1.0
+	n := noise.Simplex2(x*s, z*s) * 0.5
+	// n = blmath.RoundToNearest(n, 0.125)
+	r := globe(x, z)
+
+	return math.Min(n, r)
+}
+
 func globe(x, z float64) float64 {
-	size := 181.0
+	size := 0.5
 	r := math.Hypot(x, z)
 	if r < size {
-		return -math.Sqrt(size*size - r*r)
+		return -math.Sqrt(size*size-r*r) * 1
 	}
 	return 0
 }
