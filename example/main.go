@@ -4,6 +4,7 @@ package main
 import (
 	"math"
 
+	"github.com/bit101/bitlib/blcolor"
 	"github.com/bit101/bitlib/blmath"
 	"github.com/bit101/bitlib/noise"
 	"github.com/bit101/bitlib/random"
@@ -20,11 +21,11 @@ const (
 )
 
 func main() {
-	renderTarget := target.Image
+	renderTarget := target.Video
 	fileName := "blsurface_smooth"
 
 	if renderTarget == target.Image {
-		render.CreateAndViewImage(600, 600, "out/"+fileName+".png", scene1, 0.0)
+		render.CreateAndViewImage(900, 600, "out/"+fileName+".png", scene1, 0.0)
 	} else if renderTarget == target.Video {
 		program := render.NewProgram(600, 600, 30)
 		program.AddSceneWithFrames(scene1, 360)
@@ -45,16 +46,17 @@ func scene1(context *cairo.Context, width, height, percent float64) {
 	grid := blsurface.NewGrid()
 	grid.SetGridSize(100)
 	grid.SetWidth(600)
-	grid.SetXRange(-2, 2)
-	grid.SetZRange(-2, 2)
-	grid.SetYFunc(concentricWave)
-	grid.SetYScale(0.125)
+	// grid.SetXRange(-2, 2)
+	// grid.SetZRange(-2, 2)
+	grid.SetYFunc(stepped)
+	grid.SetColorFunc(animColor(percent))
+	// grid.SetYScale(0.25)
 	// grid.SetWidth(500)
 	// grid.SetWidth(blmath.LoopSin(percent, 100, 600))
 
 	// grid.SetTiltDegrees(360 * percent)
-	// grid.SetTiltDegrees(210)
-	// grid.SetRotationDegrees(15)
+	grid.SetTiltDegrees(40)
+	// grid.SetRotationDegrees(140)
 
 	// grid.SetTiltDegrees(blmath.LoopSin(percent, -90, 90))
 	// grid.SetRotation(tau * percent)
@@ -96,7 +98,8 @@ func stepped(x, z float64) float64 {
 	s := 1.0
 	n := noise.Simplex2(x*s, z*s) * 0.5
 	// n = blmath.RoundToNearest(n, 0.125)
-	r := blmath.RoundToNearest(globe(x, z), 0.125)
+	r := globe(x, z)
+	// r = blmath.RoundToNearest(r, 0.0625)
 
 	return math.Min(n, r)
 }
@@ -108,4 +111,20 @@ func globe(x, z float64) float64 {
 		return -math.Sqrt(size*size-r*r) * 1
 	}
 	return 0
+}
+
+func concentricColor(x, y, z float64) blcolor.Color {
+	dist := math.Hypot(x, z)
+	return blcolor.HSV(dist*360, 0.5, 1)
+	// return blcolor.HSV(p.Y*360+180, 0.5, 1)
+}
+
+func heightcolor(x, y, z float64) blcolor.Color {
+	return blcolor.HSV(y*360+180, 0.5, 1)
+}
+
+func animColor(percent float64) blsurface.ColorFunc {
+	return func(x, y, z float64) blcolor.Color {
+		return blcolor.HSV(y*360+percent*360, 0.5, 1)
+	}
 }

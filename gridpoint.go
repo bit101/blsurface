@@ -4,8 +4,19 @@ package blsurface
 import "math"
 
 // GridPoint is a 3d point on a grid.
+// Each point contains X, Y, Z values which are tranformed versions of the original values,
+// and origX, origY, origZ, which are not transformed.
+// The color algorithm needs the untransformed values.
+// Possible to make this immutable and have transform functions return copies.
+// But this will add other complications. Look into it.
 type GridPoint struct {
-	X, Y, Z float64
+	origX, origY, origZ float64
+	X, Y, Z             float64
+}
+
+// NewGridPoint creates a new GridPoint.
+func NewGridPoint(x, y, z float64) *GridPoint {
+	return &GridPoint{x, y, z, x, y, z}
 }
 
 // RotateX rotates a grid point on the x axis.
