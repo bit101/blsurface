@@ -70,13 +70,6 @@ func NewGrid() *Grid {
 // Drawing
 //////////////////////////////
 
-// DrawPoints draws each point in the grid.
-func (g *Grid) DrawPoints(context *cairo.Context, radius float64) {
-	for _, p := range g.cells {
-		context.FillCircle(p.X, p.Y, radius)
-	}
-}
-
 // DrawCells draws the whole grid.
 func (g *Grid) DrawCells(context *cairo.Context) {
 	g.makeGrid()
@@ -143,6 +136,13 @@ func (g *Grid) DrawOrigin(context *cairo.Context, x, y, size float64) {
 	context.FillText("z", g.axes[3].X*size+5, g.axes[3].Y*size)
 
 	context.Restore()
+}
+
+// DrawPoints draws each point in the grid.
+func (g *Grid) DrawPoints(context *cairo.Context, radius float64) {
+	for _, p := range g.cells {
+		context.FillCircle(p.X, p.Y, radius)
+	}
 }
 
 // ////////////////////////////

@@ -28,7 +28,7 @@ func main() {
 		render.CreateAndViewImage(600, 600, "out/"+fileName+".png", scene1, 0.0)
 	} else if renderTarget == target.Video {
 		program := render.NewProgram(600, 600, 30)
-		program.AddSceneWithFrames(scene1, 360)
+		program.AddSceneWithFrames(scene1, 180)
 		program.RenderAndPlayVideo("out/frames", "out/"+fileName+".mp4")
 	}
 }
@@ -36,18 +36,18 @@ func main() {
 func scene1(context *cairo.Context, width, height, percent float64) {
 	random.Seed(0)
 	context.BlackOnWhite()
-	context.SetLineWidth(0.33)
+	// context.SetLineWidth(0.33)
 
 	//////////////////////////////
 	// make surface
 	//////////////////////////////
 	grid := blsurface.NewGrid()
 
-	grid.SetOrigin(width/2, height/2+75)
+	grid.SetOrigin(width/2, height/2)
 
 	grid.SetGridSize(100)
 
-	grid.SetWidth(600)
+	// grid.SetWidth(600)
 
 	// grid.SetXRange(-2, 2)
 	// grid.SetZRange(-2, 2)
@@ -65,7 +65,7 @@ func scene1(context *cairo.Context, width, height, percent float64) {
 	// grid.SetTilt(0)
 	// grid.SetTiltDegrees(-40)
 	// grid.SetTiltDegrees(360 * percent)
-	grid.SetTiltDegrees(blmath.LoopSin(percent, -45, 45))
+	// grid.SetTiltDegrees(blmath.LoopSin(percent, -45, 45))
 
 	grid.DrawCells(context)
 
