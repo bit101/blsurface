@@ -25,10 +25,10 @@ func main() {
 	fileName := "blsurface_smooth"
 
 	if renderTarget == target.Image {
-		render.CreateAndViewImage(900, 600, "out/"+fileName+".png", scene1, 0.0)
+		render.CreateAndViewImage(600, 600, "out/"+fileName+".png", scene1, 0.0)
 	} else if renderTarget == target.Video {
 		program := render.NewProgram(600, 600, 30)
-		program.AddSceneWithFrames(scene1, 360)
+		program.AddSceneWithFrames(scene1, 90)
 		program.RenderAndPlayVideo("out/frames", "out/"+fileName+".mp4")
 	}
 }
@@ -37,32 +37,38 @@ func scene1(context *cairo.Context, width, height, percent float64) {
 	random.Seed(0)
 	context.BlackOnWhite()
 	context.SetLineWidth(0.33)
-	context.Save()
-	context.TranslateCenter()
 
 	//////////////////////////////
 	// make surface
 	//////////////////////////////
 	grid := blsurface.NewGrid()
+
+	grid.SetOrigin(width/2, height/2)
+
 	grid.SetGridSize(100)
-	grid.SetWidth(600)
+
+	// grid.SetWidth(600)
+
 	// grid.SetXRange(-2, 2)
 	// grid.SetZRange(-2, 2)
-	grid.SetYFunc(stepped)
-	grid.SetColorFunc(animColor(percent))
-	// grid.SetYScale(0.25)
-	// grid.SetWidth(500)
-	// grid.SetWidth(blmath.LoopSin(percent, 100, 600))
+	grid.SetYScale(0.25)
 
+	grid.SetYFunc(concentricWave)
+
+	// grid.SetColorFunc(animColor(percent))
+
+	// grid.SetRotation(0)
+	// grid.SetRotationDegrees(10)
+	grid.SetRotation(tau * percent)
+
+	// grid.SetTilt(0)
+	// grid.SetTiltDegrees(-40)
 	// grid.SetTiltDegrees(360 * percent)
-	grid.SetTiltDegrees(40)
-	// grid.SetRotationDegrees(140)
-
-	// grid.SetTiltDegrees(blmath.LoopSin(percent, -90, 90))
-	// grid.SetRotation(tau * percent)
+	// grid.SetTiltDegrees(blmath.LoopSin(percent, -45, 45))
 
 	grid.DrawCells(context)
-	context.Restore()
+
+	grid.DrawOrigin(context, 300, 200, 100)
 }
 
 func concentricWave(x, z float64) float64 {

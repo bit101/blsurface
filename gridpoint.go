@@ -23,8 +23,8 @@ func NewGridPoint(x, y, z float64) *GridPoint {
 func (g *GridPoint) RotateX(t float64) {
 	cos := math.Cos(t)
 	sin := math.Sin(t)
-	y := g.Y*cos + g.Z*sin
-	z := g.Z*cos - g.Y*sin
+	y := g.Y*cos - g.Z*sin
+	z := g.Z*cos + g.Y*sin
 	g.Y = y
 	g.Z = z
 }
@@ -33,8 +33,8 @@ func (g *GridPoint) RotateX(t float64) {
 func (g *GridPoint) RotateY(t float64) {
 	cos := math.Cos(t)
 	sin := math.Sin(t)
-	x := g.X*cos + g.Z*sin
-	z := g.Z*cos - g.X*sin
+	x := g.X*cos - g.Z*sin
+	z := g.Z*cos + g.X*sin
 	g.X = x
 	g.Z = z
 }
@@ -43,8 +43,8 @@ func (g *GridPoint) RotateY(t float64) {
 func (g *GridPoint) RotateZ(t float64) {
 	cos := math.Cos(t)
 	sin := math.Sin(t)
-	x := g.X*cos + g.Y*sin
-	y := g.Y*cos - g.X*sin
+	x := g.X*cos - g.Y*sin
+	y := g.Y*cos + g.X*sin
 	g.X = x
 	g.Y = y
 }
