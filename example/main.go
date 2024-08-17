@@ -28,7 +28,7 @@ func main() {
 		render.CreateAndViewImage(600, 600, "out/"+fileName+".png", scene1, 0.0)
 	} else if renderTarget == target.Video {
 		program := render.NewProgram(600, 600, 30)
-		program.AddSceneWithFrames(scene1, 90)
+		program.AddSceneWithFrames(scene1, 360)
 		program.RenderAndPlayVideo("out/frames", "out/"+fileName+".mp4")
 	}
 }
@@ -43,19 +43,20 @@ func scene1(context *cairo.Context, width, height, percent float64) {
 	//////////////////////////////
 	grid := blsurface.NewGrid()
 
-	grid.SetOrigin(width/2, height/2)
+	grid.SetOrigin(width/2, height/2+75)
 
 	grid.SetGridSize(100)
 
-	// grid.SetWidth(600)
+	grid.SetWidth(600)
 
 	// grid.SetXRange(-2, 2)
 	// grid.SetZRange(-2, 2)
-	grid.SetYScale(0.25)
 
-	grid.SetYFunc(concentricWave)
+	// grid.SetYScale(0.25)
 
-	// grid.SetColorFunc(animColor(percent))
+	grid.SetYFunc(stepped)
+
+	grid.SetColorFunc(animColor(percent))
 
 	// grid.SetRotation(0)
 	// grid.SetRotationDegrees(10)
@@ -64,11 +65,11 @@ func scene1(context *cairo.Context, width, height, percent float64) {
 	// grid.SetTilt(0)
 	// grid.SetTiltDegrees(-40)
 	// grid.SetTiltDegrees(360 * percent)
-	// grid.SetTiltDegrees(blmath.LoopSin(percent, -45, 45))
+	grid.SetTiltDegrees(blmath.LoopSin(percent, -45, 45))
 
 	grid.DrawCells(context)
 
-	grid.DrawOrigin(context, 300, 200, 100)
+	grid.DrawOrigin(context, 300, 150, 100)
 }
 
 func concentricWave(x, z float64) float64 {
@@ -101,11 +102,17 @@ func staticNoise(x, z float64) float64 {
 }
 
 func stepped(x, z float64) float64 {
-	s := 1.0
-	n := noise.Simplex2(x*s, z*s) * 0.5
+	s := 2.0
+	n := noise.Simplex2(x*s, z*s) * 0.25
 	// n = blmath.RoundToNearest(n, 0.125)
 	r := globe(x, z)
 	// r = blmath.RoundToNearest(r, 0.0625)
+	if math.Hypot(x, z) < 0.1 {
+		return -0.5
+	}
+	if math.Hypot(x, z) < 0.2 {
+		return -0.35
+	}
 
 	return math.Min(n, r)
 }
@@ -131,6 +138,9 @@ func heightcolor(x, y, z float64) blcolor.Color {
 
 func animColor(percent float64) blsurface.ColorFunc {
 	return func(x, y, z float64) blcolor.Color {
-		return blcolor.HSV(y*360+percent*360, 0.5, 1)
+		// return blcolor.HSV(y*360+percent*360, 0.5, 1)
+		n := noise.Simplex3(x, y, z)
+		n1 := noise.Simplex3(x*2+1, y*2+1, z*2+1) / 2
+		return blcolor.HSV((n+n1)*180+percent*360, 0.5, 1)
 	}
 }
