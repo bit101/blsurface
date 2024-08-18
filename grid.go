@@ -132,7 +132,7 @@ func (g *Grid) DrawPoints(context *cairo.Context, radius float64) {
 // ////////////////////////////
 func (g *Grid) applyFunc() {
 	for _, p := range g.cells {
-		p.Y = g.yFunc(p.X, p.Z) * g.yScale
+		p.Y = -g.yFunc(p.X, p.Z) * g.yScale
 		p.origY = p.Y
 	}
 }

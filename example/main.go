@@ -46,7 +46,7 @@ func scene1(context *cairo.Context, width, height, percent float64) {
 
 	grid.SetOrigin(width/2, height/2, 100)
 	grid.SetPerspective(true)
-	grid.SetFocalLength(1000)
+	// grid.SetFocalLength(100)
 
 	grid.SetGridSize(40)
 
@@ -67,7 +67,7 @@ func scene1(context *cairo.Context, width, height, percent float64) {
 
 	// grid.SetTilt(0)
 	// grid.SetTiltDegrees(-40)
-	grid.SetTiltDegrees(360 * percent)
+	// grid.SetTiltDegrees(360 * percent)
 	// grid.SetTiltDegrees(blmath.LoopSin(percent, -45, 45))
 
 	grid.DrawCells(context)
@@ -111,23 +111,27 @@ func stepped(x, z float64) float64 {
 	r := globe(x, z)
 	// r = blmath.RoundToNearest(r, 0.0625)
 	if math.Hypot(x, z) < 0.1 {
-		return -0.5
+		return 0.5
 	}
 	if math.Hypot(x, z) < 0.2 {
-		return -0.35
+		return 0.35
 	}
 
-	return math.Min(n, r)
+	return math.Max(n, r)
 }
 
 func globe(x, z float64) float64 {
 	size := 0.5
 	r := math.Hypot(x, z)
 	if r < size {
-		return -math.Sqrt(size*size-r*r) * 1
+		return math.Sqrt(size*size-r*r) * 1
 	}
 	return 0
 }
+
+//////////////////////////////
+// Color funcs
+//////////////////////////////
 
 func concentricColor(x, y, z float64) blcolor.Color {
 	dist := math.Hypot(x, z)
@@ -145,26 +149,5 @@ func animColor(percent float64) blsurface.ColorFunc {
 		n := noise.Simplex3(x, y, z)
 		n1 := noise.Simplex3(x*2+1, y*2+1, z*2+1) / 2
 		return blcolor.HSV((n+n1)*180+percent*360, 0.5, 1)
-	}
-}
-
-func fractal() blsurface.YFunction {
-	data := [][]float64{}
-	for i := range 41 {
-		data = append(data, []float64{})
-		for range 41 {
-			data[i] = append(data[i], 0.0)
-		}
-	}
-	// subdivide(&data, 20, 40, 0, 20, 0.5)
-	// subdivide(data, 0, 20, 0, 20, 0.5)
-	// subdivide(data, 20, 40, 0, 20, 0.5)
-	// subdivide(data, 20, 40, 20, 40, 0.5)
-	// subdivide(data, 0, 20, 20, 40, 0.5)
-
-	return func(x, z float64) float64 {
-		xi := int(blmath.Map(x, -1, 1, 0, 40))
-		zi := int(blmath.Map(z, -1, 1, 0, 40))
-		return data[xi][zi]
 	}
 }

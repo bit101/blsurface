@@ -22,7 +22,7 @@ func (f *Face) Zpos() float64 {
 
 // Draw draws a single face
 func (f *Face) Draw(context *cairo.Context, perspective bool, originZ, fl, scale float64, colorFunc ColorFunc) {
-	zmargin := 50.0 // a bit of a fudge factor to make sure we don't distort.
+	zmargin := 20.0 // a bit of a fudge factor to make sure we don't distort. may need to raise this someday. or make it settable.
 	if f.Zpos()*scale < -fl-originZ+zmargin {
 		return
 	}
