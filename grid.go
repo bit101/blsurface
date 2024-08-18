@@ -22,18 +22,20 @@ type ColorFunc func(x, y, z float64) blcolor.Color
 
 // Grid represents a grid of grid points.
 type Grid struct {
-	cells                  []*GridPoint
-	faces                  []*Face
-	w, d                   int
-	originX, originY       float64
-	rotation               float64
-	tilt                   float64
-	yFunc                  YFunction
-	colorFunc              ColorFunc
-	xMin, zMin, xMax, zMax float64
-	yScale                 float64
-	width                  float64
-	axes                   []*GridPoint
+	cells                     []*GridPoint
+	faces                     []*Face
+	w, d                      int
+	originX, originY, originZ float64
+	rotation                  float64
+	tilt                      float64
+	yFunc                     YFunction
+	colorFunc                 ColorFunc
+	xMin, zMin, xMax, zMax    float64
+	yScale                    float64
+	width                     float64
+	axes                      []*GridPoint
+	perspective               bool
+	fl                        float64
 }
 
 //////////////////////////////
@@ -44,20 +46,23 @@ type Grid struct {
 func NewGrid() *Grid {
 
 	return &Grid{
-		w:         20,
-		d:         20,
-		originX:   0,
-		originY:   0,
-		rotation:  math.Pi / 6,
-		tilt:      math.Pi / 6,
-		yFunc:     func(x, z float64) float64 { return 0.0 },
-		colorFunc: func(x, y, z float64) blcolor.Color { return blcolor.White },
-		yScale:    1.0,
-		xMin:      -1,
-		zMin:      -1,
-		xMax:      1,
-		zMax:      1,
-		width:     400,
+		w:           20,
+		d:           20,
+		originX:     0,
+		originY:     0,
+		originZ:     200,
+		rotation:    math.Pi / 6,
+		tilt:        math.Pi / 6,
+		yFunc:       func(x, z float64) float64 { return 0.0 },
+		colorFunc:   func(x, y, z float64) blcolor.Color { return blcolor.White },
+		yScale:      1.0,
+		xMin:        -1,
+		zMin:        -1,
+		xMax:        1,
+		zMax:        1,
+		width:       400,
+		perspective: false,
+		fl:          350.0,
 		axes: []*GridPoint{
 			NewGridPoint(0, 0, 0),
 			NewGridPoint(1, 0, 0),
@@ -103,7 +108,7 @@ func (g *Grid) DrawCells(context *cairo.Context) {
 	scale := g.width / (g.xMax - g.xMin)
 	slices.SortFunc(g.faces, sortFaces)
 	for _, face := range g.faces {
-		face.Draw(context, scale, g.colorFunc)
+		face.Draw(context, g.perspective, g.originZ, g.fl, scale, g.colorFunc)
 	}
 	context.Restore()
 }
@@ -195,6 +200,11 @@ func (g *Grid) SetColorFunc(colorFunc ColorFunc) {
 	g.colorFunc = colorFunc
 }
 
+// SetFocalLength sets the value used to create perspective.
+func (g *Grid) SetFocalLength(fl float64) {
+	g.fl = fl
+}
+
 // SetGridSize sets how many cells to draw across the x-axis.
 // The number of cells for the z-axis will be computed based on the x and z ranges.
 func (g *Grid) SetGridSize(gridSize int) {
@@ -205,9 +215,15 @@ func (g *Grid) SetGridSize(gridSize int) {
 }
 
 // SetOrigin sets the center x, y, z point from which the surface will be drawn.
-func (g *Grid) SetOrigin(x, y float64) {
+func (g *Grid) SetOrigin(x, y, z float64) {
 	g.originX = x
 	g.originY = y
+	g.originZ = z
+}
+
+// SetPerspective sets whether the surface will be drawn with perspective (true) or orthographically (false).
+func (g *Grid) SetPerspective(b bool) {
+	g.perspective = b
 }
 
 // SetRotation rotates all the points on the y axis.

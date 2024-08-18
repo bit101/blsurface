@@ -29,7 +29,7 @@ func main() {
 		render.CreateAndViewImage(600, 600, "out/"+fileName+".png", scene1, 0.0)
 	} else if renderTarget == target.Video {
 		program := render.NewProgram(600, 600, 30)
-		program.AddSceneWithFrames(scene1, 360)
+		program.AddSceneWithFrames(scene1, 120)
 		program.RenderAndPlayVideo("out/frames", "out/"+fileName+".mp4")
 	}
 }
@@ -44,9 +44,11 @@ func scene1(context *cairo.Context, width, height, percent float64) {
 	//////////////////////////////
 	grid := blsurface.NewGrid()
 
-	grid.SetOrigin(width/2, height/2)
+	grid.SetOrigin(width/2, height/2, 100)
+	grid.SetPerspective(true)
+	grid.SetFocalLength(1000)
 
-	grid.SetGridSize(100)
+	grid.SetGridSize(40)
 
 	grid.SetWidth(500)
 
@@ -57,7 +59,7 @@ func scene1(context *cairo.Context, width, height, percent float64) {
 
 	grid.SetYFunc(stepped)
 
-	grid.SetColorFunc(animColor(percent))
+	// grid.SetColorFunc(animColor(percent))
 
 	// grid.SetRotation(0)
 	// grid.SetRotationDegrees(140)
@@ -70,7 +72,7 @@ func scene1(context *cairo.Context, width, height, percent float64) {
 
 	grid.DrawCells(context)
 
-	grid.DrawAxes(context, 300, 150, 100)
+	// grid.DrawAxes(context, 300, 150, 100)
 }
 
 func concentricWave(x, z float64) float64 {

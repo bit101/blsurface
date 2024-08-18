@@ -21,7 +21,11 @@ func (f *Face) Zpos() float64 {
 }
 
 // Draw draws a single face
-func (f *Face) Draw(context *cairo.Context, scale float64, colorFunc ColorFunc) {
+func (f *Face) Draw(context *cairo.Context, perspective bool, originZ, fl, scale float64, colorFunc ColorFunc) {
+	zmargin := 50.0 // a bit of a fudge factor to make sure we don't distort.
+	if f.Zpos()*scale < -fl-originZ+zmargin {
+		return
+	}
 	avg := &GridPoint{
 		X: (f.p0.origX + f.p1.origX + f.p2.origX + f.p3.origX) / 4,
 		Y: (f.p0.origY + f.p1.origY + f.p2.origY + f.p3.origY) / 4,
@@ -29,10 +33,10 @@ func (f *Face) Draw(context *cairo.Context, scale float64, colorFunc ColorFunc) 
 	}
 
 	context.Save()
-	context.MoveTo(f.project(f.p0, scale))
-	context.LineTo(f.project(f.p1, scale))
-	context.LineTo(f.project(f.p2, scale))
-	context.LineTo(f.project(f.p3, scale))
+	context.MoveTo(f.project(f.p0, perspective, originZ, fl, scale))
+	context.LineTo(f.project(f.p1, perspective, originZ, fl, scale))
+	context.LineTo(f.project(f.p2, perspective, originZ, fl, scale))
+	context.LineTo(f.project(f.p3, perspective, originZ, fl, scale))
 	context.ClosePath()
 
 	context.SetSourceColor(colorFunc(avg.X, avg.Y, avg.Z))
@@ -47,13 +51,14 @@ func (f *Face) Draw(context *cairo.Context, scale float64, colorFunc ColorFunc) 
 	context.Restore()
 }
 
-func (f *Face) project(p *GridPoint, scale float64) (float64, float64) {
-	fl := 300.0
+func (f *Face) project(p *GridPoint, perspective bool, originZ, fl, scale float64) (float64, float64) {
 	x := p.X * scale
 	y := p.Y * scale
-	z := p.Z * scale
-	scale = fl / (fl + z + 200)
-	x *= scale
-	y *= scale
+	if perspective {
+		z := p.Z * scale
+		scale = fl / (fl + z + originZ)
+		x *= scale
+		y *= scale
+	}
 	return x, y
 }
