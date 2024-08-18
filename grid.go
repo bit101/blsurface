@@ -2,8 +2,8 @@
 package blsurface
 
 import (
-	"log"
 	"math"
+	"slices"
 
 	"github.com/bit101/bitlib/blcolor"
 	"github.com/bit101/bitlib/blmath"
@@ -23,6 +23,7 @@ type ColorFunc func(x, y, z float64) blcolor.Color
 // Grid represents a grid of grid points.
 type Grid struct {
 	cells                  []*GridPoint
+	faces                  []*Face
 	w, d                   int
 	originX, originY       float64
 	rotation               float64
@@ -70,54 +71,8 @@ func NewGrid() *Grid {
 // Drawing
 //////////////////////////////
 
-// DrawCells draws the whole grid.
-func (g *Grid) DrawCells(context *cairo.Context) {
-	g.makeGrid()
-	g.applyFunc()
-	g.transform()
-	context.Save()
-	context.Translate(g.originX, g.originY)
-	for i := 0; i < g.w; i++ {
-		for j := 0; j < g.d; j++ {
-			x := g.getXIndex(i)
-			z := g.getZIndex(j)
-			g.drawCell(context, x, z)
-		}
-	}
-	context.Restore()
-}
-
-func (g *Grid) drawCell(context *cairo.Context, x, z int) {
-	p0 := g.getCell(x, z)
-	p1 := g.getCell(x+1, z)
-	p2 := g.getCell(x+1, z+1)
-	p3 := g.getCell(x, z+1)
-	avg := &GridPoint{
-		X: (p0.origX + p1.origX + p2.origX + p3.origX) / 4,
-		Y: (p0.origY + p1.origY + p2.origY + p3.origY) / 4,
-		Z: (p0.origZ + p1.origZ + p2.origZ + p3.origZ) / 4,
-	}
-
-	context.Save()
-	context.MoveTo(g.project(p0))
-	context.LineTo(g.project(p1))
-	context.LineTo(g.project(p2))
-	context.LineTo(g.project(p3))
-	context.ClosePath()
-
-	context.SetSourceColor(g.colorFunc(avg.X, avg.Y, avg.Z))
-	context.FillPreserve()
-
-	context.Save()
-	context.SetLineWidth(1)
-	context.StrokePreserve()
-	context.Restore()
-	context.SetSourceBlack()
-	context.Stroke()
-	context.Restore()
-}
-
-func (g *Grid) DrawOrigin(context *cairo.Context, x, y, size float64) {
+// DrawAxes draws a representation of the x, y, z axis lines.
+func (g *Grid) DrawAxes(context *cairo.Context, x, y, size float64) {
 	context.Save()
 	m := *cairo.NewMatrix()
 	m.InitIdentity()
@@ -136,6 +91,28 @@ func (g *Grid) DrawOrigin(context *cairo.Context, x, y, size float64) {
 	context.FillText("z", g.axes[3].X*size+5, g.axes[3].Y*size)
 
 	context.Restore()
+}
+
+// DrawCells draws the whole grid.
+func (g *Grid) DrawCells(context *cairo.Context) {
+	g.makeGrid()
+	g.applyFunc()
+	g.transform()
+	context.Save()
+	context.Translate(g.originX, g.originY)
+	scale := g.width / (g.xMax - g.xMin)
+	slices.SortFunc(g.faces, sortFaces)
+	for _, face := range g.faces {
+		face.Draw(context, scale, g.colorFunc)
+	}
+	context.Restore()
+}
+
+func sortFaces(a, b *Face) int {
+	if a.Zpos() > b.Zpos() {
+		return -1
+	}
+	return 1
 }
 
 // DrawPoints draws each point in the grid.
@@ -160,20 +137,6 @@ func (g *Grid) getCell(x, z int) *GridPoint {
 	return g.cells[index]
 }
 
-func (g *Grid) getXIndex(i int) int {
-	if g.rotation <= math.Pi {
-		return g.w - 1 - i
-	}
-	return i
-}
-
-func (g *Grid) getZIndex(j int) int {
-	if g.rotation > math.Pi*0.5 && g.rotation <= math.Pi*1.5 {
-		return g.d - 1 - j
-	}
-	return j
-}
-
 func (g *Grid) makeGrid() {
 	wf := float64(g.w)
 	df := float64(g.d)
@@ -188,21 +151,18 @@ func (g *Grid) makeGrid() {
 		}
 	}
 	g.cells = grid
-}
+	for i := 0; i < g.w; i++ {
+		for j := 0; j < g.d; j++ {
+			x := i
+			z := j
+			p0 := g.getCell(x, z)
+			p1 := g.getCell(x+1, z)
+			p2 := g.getCell(x+1, z+1)
+			p3 := g.getCell(x, z+1)
 
-func (g *Grid) project(p *GridPoint) (float64, float64) {
-	// someday I'll get perspective working again.
-	perspective := false
-	scale := g.width / (g.xMax - g.xMin)
-	x := p.X * scale
-	y := p.Y * scale
-	if perspective {
-		fl := 300.0
-		z := p.Z * scale
-		scale = fl / (fl + z + 100)
-		return x * scale, y * scale
+			g.faces = append(g.faces, NewFace(p0, p1, p2, p3))
+		}
 	}
-	return x, y
 }
 
 func (g *Grid) transform() {
@@ -244,6 +204,7 @@ func (g *Grid) SetGridSize(gridSize int) {
 	g.d = int(float64(g.w) * zRange / xRange)
 }
 
+// SetOrigin sets the center x, y, z point from which the surface will be drawn.
 func (g *Grid) SetOrigin(x, y float64) {
 	g.originX = x
 	g.originY = y
@@ -267,11 +228,6 @@ func (g *Grid) SetRotationDegrees(t float64) {
 
 // SetTilt rotates all the points on the x axis.
 func (g *Grid) SetTilt(t float64) {
-	if t < -math.Pi/2 || t > math.Pi/2 {
-		log.Fatal("tilt must be between -90 and +90 degrees (-PI/2 to PI/2 radians)")
-		// this can be removed once I figure out how to fix the hidden surface removal
-		// when tilt is outside this range.
-	}
 	g.tilt = t
 }
 
